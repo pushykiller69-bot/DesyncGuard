@@ -2,8 +2,10 @@
   "required": true,
   "package": "com.desyncguard.client.mixin",
   "compatibilityLevel": "JAVA_17",
+  "refmap": "desyncguard-refmap.json",
   "client": [
     "ClientPacketListenerMixin",
+    "ConnectionMixin",
     "AbstractContainerScreenMixin",
     "ItemEntityMixin",
     "PlayerPositionDesyncMixin"
