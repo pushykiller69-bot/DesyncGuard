@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "package": "com.desyncguard.client.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "client": [
+    "ClientPacketListenerMixin",
+    "AbstractContainerScreenMixin",
+    "ItemEntityMixin",
+    "PlayerPositionDesyncMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
