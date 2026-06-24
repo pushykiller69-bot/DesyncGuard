@@ -19,6 +19,7 @@ public class ClientPacketListenerMixin {
 
     @Inject(method = "handleContainerSetSlot", at = @At("TAIL"))
     private void desyncguard$onContainerSetSlot(ClientboundContainerSetSlotPacket packet, CallbackInfo ci) {
+        // Improvement 2: clearSlotPending now records response time for adaptive calibration
         DesyncTracker.clearSlotPending(packet.getContainerId(), packet.getSlot());
     }
 }

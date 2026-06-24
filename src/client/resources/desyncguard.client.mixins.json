@@ -8,7 +8,10 @@
     "ConnectionMixin",
     "AbstractContainerScreenMixin",
     "ItemEntityMixin",
-    "PlayerPositionDesyncMixin"
+    "PlayerPositionDesyncMixin",
+    "MinecraftScreenMixin",
+    "BlockUpdateMixin",
+    "TimeSyncMixin"
   ],
   "injectors": {
     "defaultRequire": 1
