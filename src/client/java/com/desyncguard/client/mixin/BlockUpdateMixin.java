@@ -27,13 +27,11 @@ public class BlockUpdateMixin {
         boolean clientShowsAir = mc.level.getBlockState(pos).isAir();
         boolean serverHasBlock = !packet.getBlockState().isAir();
         if (clientShowsAir && serverHasBlock) {
-            DesyncTracker.clearBreakPending(pos);
             DesyncHud.notifyGhostBlock(pos);
             DesyncStats.recordGhostBlock();
             DesyncGuardClient.LOGGER.warn("[DesyncGuard] Ghost block at ({}, {}, {}): server restored it",
                     pos.getX(), pos.getY(), pos.getZ());
-        } else if (!serverHasBlock) {
-            DesyncTracker.clearBreakPending(pos);
         }
+        DesyncTracker.clearBreakPending(pos);
     }
 }

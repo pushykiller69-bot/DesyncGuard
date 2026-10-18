@@ -62,6 +62,7 @@ public class DesyncHud {
 
         long now = System.currentTimeMillis();
         DesyncGuardConfig config = DesyncGuardConfig.get();
+        if (!config.hudEnabled) return;
         int x = config.hudX;
         int y = config.hudY;
         long duration = config.warnDurationMs;

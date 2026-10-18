@@ -3,7 +3,7 @@
 	"id": "desyncguard",
 	"version": "${version}",
 	"name": "DesyncGuard",
-	"description": "Detects inventory desyncs, ghost blocks, rubber-banding and lag spikes, and shows them on a HUD.",
+	"description": "Tracks inventory and block corrections, position corrections and connection health.",
 	"authors": [
 		"Me!"
 	],

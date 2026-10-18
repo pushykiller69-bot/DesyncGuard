@@ -57,7 +57,7 @@ public class DesyncGuardClient implements ClientModInitializer {
 
         LOGGER.info("[DesyncGuard] Features loaded:");
         LOGGER.info("[DesyncGuard]  - Inventory Desync Detector (server corrections after your clicks)");
-        LOGGER.info("[DesyncGuard]  - Item Drop Desync Corrector");
+        LOGGER.info("[DesyncGuard]  - Server correction tracking for blocks and player position");
         LOGGER.info("[DesyncGuard]  - Rubber-Band Detection");
         LOGGER.info("[DesyncGuard]  - Desync Warning HUD");
         LOGGER.info("[DesyncGuard]  - Client-Side TPS Estimator");

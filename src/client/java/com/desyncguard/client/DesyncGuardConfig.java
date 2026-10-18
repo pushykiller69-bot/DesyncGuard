@@ -13,25 +13,17 @@ public class DesyncGuardConfig {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static DesyncGuardConfig INSTANCE;
 
-    /** How long after one of your clicks a server correction still counts as a desync (widened automatically on high ping). */
     public int invCorrelationMs = 1500;
-    /** How long each HUD warning remains visible. */
     public int warnDurationMs = 4500;
-    /** Include player coordinates in rubber-band warnings and the session log. */
     public boolean showRubberbandCoords = true;
-    /** Minimum position correction distance that counts as rubber-banding. */
     public double rbThreshold = 1.35;
-    /** Corrections farther than this are treated as teleports (/tp, portals), not rubber-banding. */
     public double rbMaxBlocks = 12.0;
 
-    /** Horizontal HUD offset in pixels. */
+    public boolean hudEnabled = true;
     public int hudX = 6;
-    /** Vertical HUD offset in pixels. */
     public int hudY = 6;
 
-    /** Show the estimated server TPS on the HUD. */
     public boolean displayTps = true;
-    /** Write rubber-band events to desyncguard_session.log. */
     public boolean logSessionToFile = true;
 
     public static DesyncGuardConfig get() {

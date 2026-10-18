@@ -7,7 +7,6 @@
     "ClientPacketListenerMixin",
     "ConnectionMixin",
     "AbstractContainerScreenMixin",
-    "ItemEntityMixin",
     "PlayerPositionDesyncMixin",
     "MinecraftScreenMixin",
     "BlockUpdateMixin",
