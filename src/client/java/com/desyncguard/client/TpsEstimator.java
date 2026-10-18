@@ -29,6 +29,14 @@ public final class TpsEstimator {
         return tps;
     }
 
+    public static synchronized int getSamples() {
+        return samples;
+    }
+
+    public static synchronized boolean isStale(long nowMs) {
+        return lastPacketMs > 0 && nowMs - lastPacketMs >= 3000;
+    }
+
     public static synchronized void reset() {
         idx = 0;
         samples = 0;

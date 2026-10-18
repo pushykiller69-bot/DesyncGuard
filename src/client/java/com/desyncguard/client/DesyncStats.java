@@ -20,6 +20,7 @@ public class DesyncStats {
     private static final Map<Integer, AtomicInteger> slotDesyncFrequency = new ConcurrentHashMap<>();
 
     private static volatile long avgPingMs = 0;
+    private static volatile long pingJitterMs = 0;
     private static final long[] pingHistory = new long[20];
     private static int pingIndex = 0;
     private static int pingSamples = 0;
@@ -53,6 +54,14 @@ public class DesyncStats {
                 sum += pingHistory[i];
             }
             avgPingMs = sum / pingSamples;
+
+            long jitterSum = 0;
+            for (int i = 1; i < pingSamples; i++) {
+                long previous = pingHistory[(pingIndex - pingSamples + i - 1 + pingHistory.length) % pingHistory.length];
+                long current = pingHistory[(pingIndex - pingSamples + i + pingHistory.length) % pingHistory.length];
+                jitterSum += Math.abs(current - previous);
+            }
+            pingJitterMs = pingSamples > 1 ? jitterSum / (pingSamples - 1) : 0;
         }
     }
 
@@ -78,6 +87,10 @@ public class DesyncStats {
 
     public static long getAvgPingMs() {
         return avgPingMs;
+    }
+
+    public static long getPingJitterMs() {
+        return pingJitterMs;
     }
 
     public static int getPingSamples() {
@@ -114,6 +127,7 @@ public class DesyncStats {
             pingIndex = 0;
             pingSamples = 0;
             avgPingMs = 0;
+            pingJitterMs = 0;
             for (int i = 0; i < pingHistory.length; i++) {
                 pingHistory[i] = 0;
             }

@@ -74,6 +74,18 @@ public class DesyncHud {
             y += 12;
         }
 
+        if (config.displayDiagnostics) {
+            int pingSamples = DesyncStats.getPingSamples();
+            String ping = pingSamples == 0
+                    ? "Ping: collecting"
+                    : String.format("Ping: %d ms (jitter %d ms)",
+                            DesyncStats.getAvgPingMs(), DesyncStats.getPingJitterMs());
+            guiGraphics.drawString(mc.font, ping, x, y, 0xFFFFFFFF, true);
+            y += 12;
+            guiGraphics.drawString(mc.font, ConnectionDiagnosis.describe(mc.getFps()), x, y, 0xFFFFFFFF, true);
+            y += 12;
+        }
+
         float a = fade(now - lastRubberbandTime, duration);
         if (a > 0) {
             String text;

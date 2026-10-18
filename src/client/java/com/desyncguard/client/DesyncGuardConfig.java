@@ -24,6 +24,8 @@ public class DesyncGuardConfig {
     public int hudY = 6;
 
     public boolean displayTps = true;
+    // Show ping jitter and likely slowdown source.
+    public boolean displayDiagnostics = true;
     public boolean logSessionToFile = true;
 
     public static DesyncGuardConfig get() {
