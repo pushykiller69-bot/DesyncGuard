@@ -1,6 +1,6 @@
 <div align="center">
   <h1>🛡️ DesyncGuard</h1>
-  <p><b>A lightweight, 100% client-side Fabric mod that automatically detects and mitigates common Minecraft desync bugs.</b></p>
+  <p><b>A lightweight, 100% client-side Fabric mod that detects common Minecraft desync problems and shows them on a HUD.</b></p>
 
   [![Minecraft](https://img.shields.io/badge/Minecraft-1.20.4-15803d?style=for-the-badge&logo=minecraft&logoColor=white)](https://www.minecraft.net/)
   [![Fabric](https://img.shields.io/badge/Loader-Fabric-0369a1?style=for-the-badge&logo=gitbook&logoColor=white)](https://fabricmc.net/)
@@ -26,9 +26,11 @@ Existing utilities like *AntiGhost* only provide manual command/keybind triggers
 
 | Feature | Visual | How it Works |
 | :--- | :---: | :--- |
-| **Inventory Ghost Item Watchdog** | 🔴 | Monitors inventory clicks. If the server doesn't confirm the transaction within **500ms**, the slot is highlighted with a **red overlay** to warn you before you click a ghost item. |
-| **Item Drop Desync Corrector** | 📦 | If your player hitbox touches a dropped item for **>1 second** without picking it up, DesyncGuard zeroes out its client-side velocity to stop it drifting away. |
-| **Rubber-Band Detection** | ⚡ | Detects when the server forcefully teleports or corrects your position by **more than 1.5 blocks** and logs the exact coordinates. |
+| **Inventory Desync Detector** | 🔴 | The server only sends slot data when it disagrees with your click. If it sends a stack that differs from what you hold shortly after a click, that slot is highlighted red (heatmap: more frequent = darker). |
+| **Item Drop Desync Corrector** | 📦 | If your player hitbox touches a dropped item for **>1 second** without picking it up, DesyncGuard zeroes its client-side velocity to stop it drifting away. |
+| **Rubber-Band Detection** | ⚡ | Detects server position corrections larger than `rbThreshold` (default 1.35 blocks) and logs the coordinates. Join/respawn syncs and long teleports (> `rbMaxBlocks`, default 12) are ignored. |
+| **Ghost Block Detector** | 👻 | Flags a block you just broke that the server restores. |
+| **TPS / Ping Spike HUD** | 📶 | TPS estimate from time packets, connection spike warning from latency. Press **H** for the session summary. |
 | **Desync Warning HUD** | 🖥️ | A clean, minimalist overlay in the top-left of your screen with smooth fade-out animations. Shows a **Red warning** for rubber-banding and an **Orange warning** for inventory desync. |
 
 ---
@@ -48,7 +50,7 @@ To compile and package the mod yourself:
 
 ```bash
 # Clone the repository
-git clone https://github.com/desyncguard/DesyncGuard.git
+git clone https://github.com/pushykiller69-bot/DesyncGuard.git
 cd DesyncGuard
 
 # Build the JAR file
@@ -73,9 +75,7 @@ DesyncGuard is designed to be lightweight. It uses highly targeted, non-intrusiv
 
 ## Known Issues
 - Estimated TPS can bounce slightly during dimension changes or initial world load before the time packet buffer stabilizes.
-- **Do not set inventoryThresholdMs below 150** — triggers constant false positives on standard connections.
-- Session summary screen (H) layout is a bit basic, planning to clean it up to make it prettier.
-- Auto-calibration gets briefly confused if there's massive packet loss (1000ms+ lag spikes).
+- The history screen uses a simple text layout.
 
 ## 📄 License
 

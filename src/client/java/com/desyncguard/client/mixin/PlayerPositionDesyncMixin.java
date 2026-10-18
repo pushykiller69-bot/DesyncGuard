@@ -9,7 +9,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.protocol.game.ClientboundPlayerPositionPacket;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.entity.RelativeMovement;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -22,6 +22,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 @Mixin(ClientPacketListener.class)
@@ -29,79 +30,63 @@ public class PlayerPositionDesyncMixin {
 
     @Unique
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm:ss.SSS");
+    @Unique
+    private static final long MAX_LOG_BYTES = 1_000_000L;
 
-    // Commented-out experiment (Item 3)
-    // tried comparing with packet.getRelativeArguments() but it was extremely buggy
-    // and teleported the player back to 0,0,0 when they joined server.
-    // private boolean isRelative(ClientboundPlayerPositionPacket.RelativeArgument arg) { ... }
-
-    // Inconsistent mixin prefix naming (Item 2: early method name is full prefix, late one got lazy)
     @Inject(method = "handleMovePlayer", at = @At("HEAD"))
     private void desyncguard$onServerPositionCorrection(ClientboundPlayerPositionPacket packet, CallbackInfo ci) {
         Minecraft mc = Minecraft.getInstance();
+        if (!mc.isSameThread()) return;
         LocalPlayer player = mc.player;
+        if (player == null || player.tickCount < 40 || player.isPassenger()) return;
 
-        if (player == null) {
-            return;
-        }
+        Set<RelativeMovement> rel = packet.getRelativeArguments();
+        double serverX = rel.contains(RelativeMovement.X) ? player.getX() + packet.getX() : packet.getX();
+        double serverY = rel.contains(RelativeMovement.Y) ? player.getY() + packet.getY() : packet.getY();
+        double serverZ = rel.contains(RelativeMovement.Z) ? player.getZ() + packet.getZ() : packet.getZ();
 
-        DesyncGuardConfig config = DesyncGuardConfig.get();
-        // Updated field names to match new human config fields
-        double threshold = config.rbThreshold;
-
-        Vec3 clientPos = player.position();
-        double serverX = packet.getX();
-        double serverY = packet.getY();
-        double serverZ = packet.getZ();
-
-        double dx = clientPos.x - serverX;
-        double dy = clientPos.y - serverY;
-        double dz = clientPos.z - serverZ;
+        double dx = player.getX() - serverX;
+        double dy = player.getY() - serverY;
+        double dz = player.getZ() - serverZ;
         double distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
 
-        if (distance > threshold) {
-            if (config.showRubberbandCoords) {
-                DesyncGuardClient.LOGGER.warn(
-                        "[DesyncGuard] Rubber-band detected! Distance: {} blocks. " +
-                        "Client pos: ({}, {}, {}) -> Server correction: ({}, {}, {})",
-                        String.format("%.2f", distance),
-                        String.format("%.1f", clientPos.x),
-                        String.format("%.1f", clientPos.y),
-                        String.format("%.1f", clientPos.z),
-                        String.format("%.1f", serverX),
-                        String.format("%.1f", serverY),
-                        String.format("%.1f", serverZ)
-                );
-            } else {
-                DesyncGuardClient.LOGGER.warn(
-                        "[DesyncGuard] Rubber-band detected! Distance: {} blocks.",
-                        String.format("%.2f", distance)
-                );
-            }
+        DesyncGuardConfig config = DesyncGuardConfig.get();
+        if (distance <= config.rbThreshold) return;
+        if (distance > config.rbMaxBlocks) return;
 
-            DesyncHud.notifyRubberband(distance);
-            DesyncStats.recordRubberband(distance);
+        if (config.showRubberbandCoords) {
+            DesyncGuardClient.LOGGER.warn(
+                    "[DesyncGuard] Rubber-band: {} blocks. Client ({}, {}, {}) -> server ({}, {}, {})",
+                    String.format("%.2f", distance),
+                    String.format("%.1f", player.getX()), String.format("%.1f", player.getY()), String.format("%.1f", player.getZ()),
+                    String.format("%.1f", serverX), String.format("%.1f", serverY), String.format("%.1f", serverZ));
+        } else {
+            DesyncGuardClient.LOGGER.warn("[DesyncGuard] Rubber-band: {} blocks.", String.format("%.2f", distance));
+        }
 
-            // HACK: calling writeSessionLog asynchronously is fine but if the client crashes right after
-            // the rubberband we might lose the log. Good enough for now without blocking the main tick.
-            if (config.logSessionToFile) {
-                dg$quickLog(distance, clientPos.x, clientPos.y, clientPos.z);
-            }
+        DesyncHud.notifyRubberband(distance);
+        DesyncStats.recordRubberband(distance);
+
+        if (config.logSessionToFile) {
+            desyncguard$quickLog(distance, player.getX(), player.getY(), player.getZ(),
+                    config.showRubberbandCoords);
         }
     }
 
-    // Lazy prefix naming (Item 2: dg$quickLog instead of desyncguard$writeSessionLog)
     @Unique
-    private void dg$quickLog(double distance, double x, double y, double z) {
+    private void desyncguard$quickLog(double distance, double x, double y, double z, boolean showCoordinates) {
         CompletableFuture.runAsync(() -> {
             try {
-                Path logFile = FabricLoader.getInstance()
-                        .getGameDir()
-                        .resolve("desyncguard_session.log");
-                String entry = String.format("[%s] Rubber-band %.2f blocks at (%.1f, %.1f, %.1f)%n",
-                        LocalTime.now().format(TIME_FORMAT), distance, x, y, z);
-                Files.writeString(logFile, entry,
-                        StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+                Path logFile = FabricLoader.getInstance().getGameDir().resolve("desyncguard_session.log");
+                if (Files.exists(logFile) && Files.size(logFile) > MAX_LOG_BYTES) {
+                    Files.delete(logFile);
+                }
+                String entry = showCoordinates
+                        ? String.format("[%s] Rubber-band %.2f blocks at (%.1f, %.1f, %.1f)%n",
+                                LocalTime.now().format(TIME_FORMAT), distance, x, y, z)
+                        : String.format("[%s] Rubber-band %.2f blocks%n",
+                                LocalTime.now().format(TIME_FORMAT), distance);
+                Files.writeString(logFile, entry, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
             } catch (IOException e) {
                 DesyncGuardClient.LOGGER.warn("[DesyncGuard] Failed to write session log", e);
             }

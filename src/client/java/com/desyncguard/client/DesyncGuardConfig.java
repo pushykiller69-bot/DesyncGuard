@@ -8,34 +8,31 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-/**
- * Configuration for DesyncGuard.
- * TODO: Move this probably to a cleaner package or subfolder structure.
- * FIXME: If JSON is completely malformed or empty, this should overwrite it instead of failing silently.
- * Also, we might need cloth-config integration eventually if players want in-game config UI.
- */
 public class DesyncGuardConfig {
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static DesyncGuardConfig INSTANCE;
 
-    // 1. Break the Uniform Naming Pattern & 9. Specific defaults based on testing
-    public int invThresholdMs = 350;        // min: 150, max: 2000. 500ms was too slow, 200 was too touchy on standard ping
-    public int warnDurationMs = 4500;       // 5000 felt a tiny bit too long on screen
+    /** How long after one of your clicks a server correction still counts as a desync (widened automatically on high ping). */
+    public int invCorrelationMs = 1500;
+    /** How long each HUD warning remains visible. */
+    public int warnDurationMs = 4500;
+    /** Include player coordinates in rubber-band warnings and the session log. */
     public boolean showRubberbandCoords = true;
-    public double rbThreshold = 1.35;       // 1.5 allowed minor micro-rubberbanding under lag to pass undetected
-    
-    // HUD coordinates
-    public int hudX = 6;                    // offset slightly from the screen edge
+    /** Minimum position correction distance that counts as rubber-banding. */
+    public double rbThreshold = 1.35;
+    /** Corrections farther than this are treated as teleports (/tp, portals), not rubber-banding. */
+    public double rbMaxBlocks = 12.0;
+
+    /** Horizontal HUD offset in pixels. */
+    public int hudX = 6;
+    /** Vertical HUD offset in pixels. */
     public int hudY = 6;
 
+    /** Show the estimated server TPS on the HUD. */
     public boolean displayTps = true;
+    /** Write rubber-band events to desyncguard_session.log. */
     public boolean logSessionToFile = true;
-
-    // Commented-out experiment (Item 3)
-    // Tried implementing an auto-save thread that writes config on change but GSON serialization
-    // is fast enough to do on the main thread when client ticks or stops.
-    // private static Thread saveThread;
 
     public static DesyncGuardConfig get() {
         if (INSTANCE == null) {
@@ -52,12 +49,20 @@ public class DesyncGuardConfig {
                 INSTANCE = GSON.fromJson(json, DesyncGuardConfig.class);
                 if (INSTANCE == null) {
                     INSTANCE = new DesyncGuardConfig();
+                    save();
                 }
                 INSTANCE.validate();
                 DesyncGuardClient.LOGGER.info("[DesyncGuard] Config loaded from {}", configPath);
             } catch (Exception e) {
-                DesyncGuardClient.LOGGER.warn("[DesyncGuard] Failed to load config, using defaults", e);
+                DesyncGuardClient.LOGGER.warn("[DesyncGuard] Config unreadable, backing it up and writing defaults", e);
+                try {
+                    Files.copy(configPath, configPath.resolveSibling("desyncguard.json.bak"),
+                            java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                } catch (IOException backupError) {
+                    DesyncGuardClient.LOGGER.error("[DesyncGuard] Failed to back up unreadable config", backupError);
+                }
                 INSTANCE = new DesyncGuardConfig();
+                save();
             }
         } else {
             INSTANCE = new DesyncGuardConfig();
@@ -77,8 +82,8 @@ public class DesyncGuardConfig {
     }
 
     private void validate() {
-        // Human threshold validates from 150
-        invThresholdMs = Math.max(150, Math.min(2000, invThresholdMs));
+        invCorrelationMs = Math.max(300, Math.min(5000, invCorrelationMs));
+        rbMaxBlocks = Math.max(2.0, Math.min(64.0, rbMaxBlocks));
         warnDurationMs = Math.max(1000, Math.min(30000, warnDurationMs));
         rbThreshold = Math.max(0.5, Math.min(20.0, rbThreshold));
         hudX = Math.max(0, hudX);

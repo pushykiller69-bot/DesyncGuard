@@ -1,6 +1,6 @@
 package com.desyncguard.client.mixin;
 
-import com.desyncguard.DesyncTracker;
+import com.desyncguard.client.DesyncTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -9,10 +9,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/**
- * Fix 3: Clear pending slots when leaving a container screen.
- * Prevents stale desync markers from appearing when reopening inventory.
- */
 @Mixin(Minecraft.class)
 public class MinecraftScreenMixin {
 

@@ -3,13 +3,13 @@
 	"id": "desyncguard",
 	"version": "${version}",
 	"name": "DesyncGuard",
-	"description": "Fixes client-side inventory and item drop desyncs.",
+	"description": "Detects inventory desyncs, ghost blocks, rubber-banding and lag spikes, and shows them on a HUD.",
 	"authors": [
 		"Me!"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"homepage": "https://github.com/pushykiller69-bot/DesyncGuard",
+		"sources": "https://github.com/pushykiller69-bot/DesyncGuard"
 	},
 	"license": "CC0-1.0",
 	"icon": "assets/desyncguard/icon.png",
@@ -27,7 +27,7 @@
 	],
 	"depends": {
 		"fabricloader": ">=0.19.3",
-		"minecraft": "~1.20.4",
+		"minecraft": "1.20.4",
 		"java": ">=17",
 		"fabric-api": "*"
 	}

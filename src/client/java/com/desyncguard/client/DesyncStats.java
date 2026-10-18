@@ -5,28 +5,20 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-/**
- * Tracks session-wide desync statistics for the history screen and heatmap.
- */
 public class DesyncStats {
 
     private static long sessionStartTime = System.currentTimeMillis();
 
-    // Rubber-band stats
     private static final AtomicInteger rubberbandCount = new AtomicInteger(0);
     private static volatile double maxRubberbandDistance = 0.0;
     private static volatile double lastRubberbandDistance = 0.0;
 
-    // Inventory desync stats
     private static final AtomicInteger inventoryDesyncCount = new AtomicInteger(0);
 
-    // Ghost block stats
     private static final AtomicInteger ghostBlockCount = new AtomicInteger(0);
 
-    // Per-slot desync frequency for heatmap (slot key -> count)
     private static final Map<Integer, AtomicInteger> slotDesyncFrequency = new ConcurrentHashMap<>();
 
-    // Ping stats
     private static volatile long avgPingMs = 0;
     private static final long[] pingHistory = new long[20];
     private static int pingIndex = 0;
@@ -56,7 +48,6 @@ public class DesyncStats {
             if (pingSamples < pingHistory.length) {
                 pingSamples++;
             }
-            // Compute rolling average
             long sum = 0;
             for (int i = 0; i < pingSamples; i++) {
                 sum += pingHistory[i];
@@ -87,6 +78,12 @@ public class DesyncStats {
 
     public static long getAvgPingMs() {
         return avgPingMs;
+    }
+
+    public static int getPingSamples() {
+        synchronized (pingHistory) {
+            return pingSamples;
+        }
     }
 
     public static long getSessionStartTime() {
